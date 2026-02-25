@@ -66,13 +66,8 @@ function insertNewline(el) {
   document.addEventListener(type, (e) => {
     if (dispatching) return;
 
-    // Escキー: 編集textarea優先、なければチャット入力にフォーカス
+    // Escキー: チャット入力にフォーカス
     if (e.key === 'Escape' && type === 'keydown') {
-      const editTextarea = document.querySelector('form textarea');
-      if (editTextarea && document.activeElement !== editTextarea) {
-        editTextarea.focus();
-        return;
-      }
       const chatInput = document.querySelector('[data-testid="chat-input"], .ProseMirror');
       if (chatInput && document.activeElement !== chatInput) {
         chatInput.focus();
