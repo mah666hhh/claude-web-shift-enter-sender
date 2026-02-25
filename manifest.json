@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Claude Send with Shift+Enter",
+  "version": "1.0",
+  "description": "Enterで改行、Shift+Enter で送信に変更",
+  "content_scripts": [
+    {
+      "matches": ["https://claude.ai/*"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ],
+  "permissions": []
+}
