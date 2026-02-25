@@ -1,69 +1,23 @@
-let dispatching = false;
+// ISOLATED world: storageから設定を読み込み、datasetで注入し、injected.jsを挿入
 
-// チャット入力欄（ProseMirror）
-function isChatInput(el) {
-  return el.closest('[data-testid="chat-input"], .ProseMirror');
+function applySettings(sendKey) {
+  document.documentElement.dataset.sendKey = sendKey;
 }
 
-// 編集フォームのtextarea
-function isEditTextarea(el) {
-  return el.tagName === 'TEXTAREA' && el.closest('form');
-}
-
-['keydown', 'keyup', 'keypress'].forEach(type => {
-  document.addEventListener(type, (e) => {
-    if (dispatching) return;
-    if (e.key !== 'Enter') return;
-
-    const el = e.target;
-    const inChat = isChatInput(el);
-    const inEdit = isEditTextarea(el);
-    if (!inChat && !inEdit) return;
-
-    if (e.isComposing) {
-      e.stopImmediatePropagation();
-      return;
-    }
-
-    e.preventDefault();
-    e.stopImmediatePropagation();
-
-    if (type !== 'keydown') return;
-
-    if (e.shiftKey) {
-      // Shift+Enter → 送信
-      if (inChat) {
-        const sendBtn = document.querySelector('button[aria-label="メッセージを送信"]');
-        if (sendBtn && !sendBtn.disabled) sendBtn.click();
-      } else {
-        const form = el.closest('form');
-        const submitBtn = form.querySelector('button[type="submit"]');
-        if (submitBtn && !submitBtn.disabled) submitBtn.click();
-      }
-    } else {
-      // Enter → 改行
-      if (inChat) {
-        dispatching = true;
-        el.dispatchEvent(new KeyboardEvent('keydown', {
-          key: 'Enter', code: 'Enter', keyCode: 13,
-          shiftKey: true, bubbles: true, cancelable: true
-        }));
-        dispatching = false;
-      } else {
-        // textareaは直接改行を挿入
-        const start = el.selectionStart;
-        el.value = el.value.slice(0, start) + '\n' + el.value.slice(el.selectionEnd);
-        el.selectionStart = el.selectionEnd = start + 1;
-        el.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-    }
-  }, true);
+// 設定読み込み → dataset に反映
+chrome.storage.sync.get({ sendKey: 'shift' }, (data) => {
+  applySettings(data.sendKey);
 });
 
-document.addEventListener('beforeinput', (e) => {
-  if (!isChatInput(e.target)) return;
-  if (e.inputType === 'insertParagraph') {
-    e.preventDefault();
-    e.stopImmediatePropagation();
+// ポップアップからの設定変更をリアルタイム反映
+chrome.storage.onChanged.addListener((changes) => {
+  if (changes.sendKey) {
+    applySettings(changes.sendKey.newValue);
   }
-}, true);
+});
+
+// injected.js を MAIN world に挿入
+const script = document.createElement('script');
+script.src = chrome.runtime.getURL('injected.js');
+script.onload = () => script.remove();
+(document.head || document.documentElement).appendChild(script);
