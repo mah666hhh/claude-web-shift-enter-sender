@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Claude Send with Shift+Enter",
-  "version": "1.1",
+  "version": "1.2",
   "description": "送信キーを Shift+Enter / Cmd+Enter / Enter から選択可能",
   "content_scripts": [
     {
