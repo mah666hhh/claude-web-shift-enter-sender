@@ -1,12 +1,16 @@
 let dispatching = false;
 let sendKey = document.documentElement.dataset.sendKey || 'shift';
+let googleSearch = document.documentElement.dataset.googleSearch === 'true';
+let searchQueryLength = parseInt(document.documentElement.dataset.searchQueryLength) || 100;
 
 // dataset変更を監視してリアルタイム反映
 new MutationObserver(() => {
   sendKey = document.documentElement.dataset.sendKey || 'shift';
+  googleSearch = document.documentElement.dataset.googleSearch === 'true';
+  searchQueryLength = parseInt(document.documentElement.dataset.searchQueryLength) || 100;
 }).observe(document.documentElement, {
   attributes: true,
-  attributeFilter: ['data-send-key']
+  attributeFilter: ['data-send-key', 'data-google-search', 'data-search-query-length']
 });
 
 // チャット入力欄（ProseMirror）
@@ -34,6 +38,15 @@ function isNewlineKey(e) {
 }
 
 function sendMessage(el) {
+  // Google検索（同じタブを再利用）
+  if (googleSearch) {
+    const text = isChatInput(el) ? el.textContent : el.value;
+    const query = text.trim().slice(0, searchQueryLength);
+    if (query) {
+      window.dispatchEvent(new CustomEvent('googleSearchRequest', { detail: { query } }));
+    }
+  }
+
   if (isChatInput(el)) {
     const sendBtn = document.querySelector('button[aria-label="メッセージを送信"]');
     if (sendBtn && !sendBtn.disabled) sendBtn.click();
